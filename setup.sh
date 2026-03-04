@@ -5,7 +5,7 @@
 # =============================================================
 # Chay lenh nay trong Terminal:
 #
-#   curl -fsSL https://raw.githubusercontent.com/sellersmith/shopify-app-template-react-router/main/setup.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/sellersmith/shopify-app-template-react-router-sqlite/main/setup.sh | bash
 #
 # Hoac neu da clone repo:
 #
@@ -27,8 +27,8 @@ print_success() { echo -e "${GREEN}  ✓${NC} ${1}"; }
 print_warning() { echo -e "${YELLOW}  ⚠${NC} ${1}"; }
 print_error() { echo -e "${RED}  ✗${NC} ${1}"; }
 
-REPO_URL="https://github.com/sellersmith/shopify-app-template-react-router.git"
-PROJECT_DIR="$HOME/projects/shopify-app-template-react-router"
+REPO_URL="https://github.com/sellersmith/shopify-app-template-react-router-sqlite.git"
+PROJECT_DIR="$HOME/projects/shopify-app-template-react-router-sqlite"
 
 # --------------------------------------------------
 # 1. Homebrew

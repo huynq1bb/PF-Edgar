@@ -1,0 +1,23 @@
+/* Virtual Try-On App Embed */
+.virtual-try-on-embed {
+  position: fixed;
+  z-index: 9999;
+  bottom: 1.5rem;
+  right: 1.5rem;
+}
+
+.virtual-try-on-embed__toggle {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+  background: #000;
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+
+.virtual-try-on-embed__toggle:hover {
+  background: #333;
+}

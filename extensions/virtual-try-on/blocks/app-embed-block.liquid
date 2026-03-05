@@ -1,0 +1,25 @@
+{% comment %}
+  App embed block: Virtual Try-On - Có thể nhúng toàn store (floating/overlay).
+  Merchant bật trong Theme settings > App embeds.
+{% endcomment %}
+
+<div id="virtual-try-on-embed" class="virtual-try-on-embed" data-virtual-try-on-embed aria-hidden="true">
+  <div class="virtual-try-on-embed__container" data-embed-container>
+    <button type="button" class="virtual-try-on-embed__toggle" data-embed-toggle aria-label="{{ 'virtual_try_on.open' | t }}">
+      {{ 'virtual_try_on.try_on' | t }}
+    </button>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Virtual Try-On (Embed)",
+  "target": "body",
+  "enabled_on": {
+    "templates": ["product", "collection"]
+  },
+  "stylesheet": "app-embed-block.css",
+  "javascript": "app-embed-block.js",
+  "settings": []
+}
+{% endschema %}

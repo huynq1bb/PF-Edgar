@@ -1,0 +1,7 @@
+{
+  "virtual_try_on": {
+    "placeholder": "Nhập chiều cao, cân nặng, màu da và chọn sản phẩm để xem hình ảnh thử đồ.",
+    "try_on": "Thử đồ với AI",
+    "open": "Mở Virtual Try-On"
+  }
+}

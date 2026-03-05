@@ -1,0 +1,52 @@
+{% comment %}
+  App block: Virtual Try-On - Hiển thị trên section (ví dụ product page).
+  Merchant có thể thêm block này vào section hỗ trợ app blocks.
+{% endcomment %}
+
+<div class="virtual-try-on-block" data-virtual-try-on>
+  <div class="virtual-try-on-block__header">
+    <h3 class="virtual-try-on-block__title">{{ block.settings.heading | default: 'Thử trang phục với AI' }}</h3>
+    {% if block.settings.subheading != blank %}
+      <p class="virtual-try-on-block__subheading">{{ block.settings.subheading }}</p>
+    {% endif %}
+  </div>
+  <div class="virtual-try-on-block__cta">
+    <button type="button" class="virtual-try-on-block__button" data-try-on-trigger>
+      {{ block.settings.button_label | default: 'Bắt đầu thử đồ' }}
+    </button>
+  </div>
+  <div class="virtual-try-on-block__placeholder" data-try-on-placeholder aria-hidden="true">
+    <p>{{ 'virtual_try_on.placeholder' | t }}</p>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Virtual Try-On",
+  "target": "section",
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "stylesheet": "app-block.css",
+  "javascript": "app-block.js",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Tiêu đề",
+      "default": "Thử trang phục với AI"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Mô tả ngắn"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Nhãn nút",
+      "default": "Bắt đầu thử đồ"
+    }
+  ]
+}
+{% endschema %}

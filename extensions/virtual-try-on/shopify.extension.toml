@@ -1,0 +1,10 @@
+# Theme App Extension - Virtual Try-On
+# https://shopify.dev/docs/apps/build/online-store/theme-app-extensions/configuration
+
+api_version = "2024-10"
+
+[[extensions]]
+name = "Virtual Try-On"
+handle = "virtual-try-on"
+uid = "fb5cefd5-2d97-5cfd-2187-978ed66d1afa44ee5be9"
+type = "theme"

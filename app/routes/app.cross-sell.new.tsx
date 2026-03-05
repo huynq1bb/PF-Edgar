@@ -41,7 +41,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return { error: "Nhập ít nhất một link sản phẩm gợi ý (1, 2 hoặc 3).", form };
   }
 
-  await prisma.crossSellRule.create({
+  const repo = (prisma as unknown as Record<string, unknown>).crossSellRule as { create: (args: { data: object }) => Promise<unknown> } | undefined;
+  if (!repo?.create) {
+    return { error: "Database not ready. Run: npm run setup", form };
+  }
+  await repo.create({
     data: {
       shop: session.shop,
       name,

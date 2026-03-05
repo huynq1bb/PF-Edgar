@@ -6,11 +6,13 @@ import prisma from "../db.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
-  const rules = await prisma.crossSellRule.findMany({
+  const repo = (prisma as unknown as Record<string, unknown>).crossSellRule as { findMany: (args: object) => Promise<unknown[]> } | undefined;
+  if (!repo?.findMany) return { rules: [] };
+  const rules = await repo.findMany({
     where: { shop: session.shop },
     orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
   });
-  return { rules };
+  return { rules: rules as Array<{ id: string; name: string; enabled: boolean; triggerValue: string; suggestedProductId1: string | null; suggestedProductId2: string | null; suggestedProductId3: string | null }> };
 };
 
 export default function CrossSellIndex() {

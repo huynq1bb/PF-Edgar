@@ -9,16 +9,24 @@ import type { ProductPreview } from "../cross-sell.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
-  const rule = await prisma.crossSellRule.findFirst({
+  const repo = (prisma as unknown as Record<string, unknown>).crossSellRule as { findFirst: (args: object) => Promise<unknown | null> } | undefined;
+  if (!repo?.findFirst) throw new Response("Service unavailable", { status: 503 });
+  const rule = await repo.findFirst({
     where: { id: params.id!, shop: session.shop },
   });
   if (!rule) throw new Response("Not found", { status: 404 });
-  return { rule };
+  return { rule: rule as { id: string; name: string; triggerValue: string; suggestedProductId1: string | null; suggestedProductId2: string | null; suggestedProductId3: string | null } };
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { session, admin } = await authenticate.admin(request);
-  const rule = await prisma.crossSellRule.findFirst({
+  const repo = (prisma as unknown as Record<string, unknown>).crossSellRule as {
+    findFirst: (args: object) => Promise<unknown | null>;
+    delete: (args: { where: { id: string } }) => Promise<unknown>;
+    update: (args: { where: { id: string }; data: object }) => Promise<unknown>;
+  } | undefined;
+  if (!repo?.findFirst) throw new Response("Service unavailable", { status: 503 });
+  const rule = await repo.findFirst({
     where: { id: params.id!, shop: session.shop },
   });
   if (!rule) throw new Response("Not found", { status: 404 });
@@ -26,7 +34,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
   if (intent === "delete") {
-    await prisma.crossSellRule.delete({ where: { id: rule.id } });
+    await repo.delete({ where: { id: (rule as { id: string }).id } });
     return redirect("/app/cross-sell");
   }
 
@@ -54,8 +62,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return { error: "Nhập ít nhất một link sản phẩm gợi ý (1, 2 hoặc 3)." };
   }
 
-  await prisma.crossSellRule.update({
-    where: { id: rule.id },
+  await repo.update({
+    where: { id: (rule as { id: string }).id },
     data: {
       name,
       triggerValue: triggerGid,

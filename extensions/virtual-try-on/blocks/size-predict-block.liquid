@@ -1,0 +1,65 @@
+{% comment %}
+  App block: AI Size Predict - form height/weight, suggest size with confidence.
+  Shown on product page. Requests go via App Proxy to the app backend.
+{% endcomment %}
+
+<div class="size-predict-block" data-size-predict>
+  <div class="size-predict-block__header">
+    <h3 class="size-predict-block__title">{{ block.settings.heading | default: 'Gợi ý size' }}</h3>
+    {% if block.settings.subheading != blank %}
+      <p class="size-predict-block__subheading">{{ block.settings.subheading }}</p>
+    {% endif %}
+  </div>
+  <form class="size-predict-block__form" data-size-predict-form novalidate>
+    <div class="size-predict-block__fields">
+      <label class="size-predict-block__label">
+        <span>{{ 'size_predict.height_label' | t: default: 'Chiều cao (cm)' }}</span>
+        <input type="number" name="height" min="50" max="250" step="1" placeholder="170" required class="size-predict-block__input" data-size-predict-height />
+      </label>
+      <label class="size-predict-block__label">
+        <span>{{ 'size_predict.weight_label' | t: default: 'Cân nặng (kg)' }}</span>
+        <input type="number" name="weight" min="30" max="200" step="0.5" placeholder="65" required class="size-predict-block__input" data-size-predict-weight />
+      </label>
+    </div>
+    <button type="submit" class="size-predict-block__button" data-size-predict-submit>
+      {{ block.settings.button_label | default: 'Gợi ý size' }}
+    </button>
+  </form>
+  <div class="size-predict-block__result" data-size-predict-result aria-live="polite" aria-hidden="true">
+    <p class="size-predict-block__message" data-size-predict-message></p>
+  </div>
+  <div class="size-predict-block__error" data-size-predict-error aria-live="polite" aria-hidden="true">
+    <p class="size-predict-block__error-text" data-size-predict-error-text></p>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "AI Size Predict",
+  "target": "section",
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "stylesheet": "size-predict-block.css",
+  "javascript": "size-predict-block.js",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Gợi ý size"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Gợi ý size"
+    }
+  ]
+}
+{% endschema %}

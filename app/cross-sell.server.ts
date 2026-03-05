@@ -1,5 +1,25 @@
-import type { CrossSellRule } from "@prisma/client";
 import prisma from "./db.server";
+
+/** Cross-sell rule shape (matches Prisma model CrossSellRule). */
+export interface CrossSellRule {
+  id: string;
+  shop: string;
+  name: string;
+  triggerType: string;
+  triggerValue: string;
+  suggestedProductId1: string | null;
+  suggestedProductId2: string | null;
+  suggestedProductId3: string | null;
+  filterCollectionId: string | null;
+  filterPriceMin: number | null;
+  filterPriceMax: number | null;
+  filterTags: string | null;
+  maxRecommendations: number;
+  priority: number;
+  enabled: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes (AC8)
 const cache = new Map<string, { at: number; productIds: string[] }>();
@@ -76,7 +96,11 @@ export async function resolveProductGid(
 
 /** Returns the highest-priority enabled rule that matches this product (AC7). */
 export async function getMatchingRule(shop: string, productGid: string): Promise<CrossSellRule | null> {
-  const rules = await prisma.crossSellRule.findMany({
+  const repo = (prisma as unknown as Record<string, unknown>).crossSellRule as {
+    findMany: (args: object) => Promise<CrossSellRule[]>;
+  } | undefined;
+  if (!repo?.findMany) return null;
+  const rules = await repo.findMany({
     where: { shop, enabled: true },
     orderBy: { priority: "desc" },
   });

@@ -3,5 +3,11 @@
     "placeholder": "Nhập chiều cao, cân nặng, màu da và chọn sản phẩm để xem hình ảnh thử đồ.",
     "try_on": "Thử đồ với AI",
     "open": "Mở Virtual Try-On"
+  },
+  "size_predict": {
+    "height_label": "Chiều cao (cm)",
+    "weight_label": "Cân nặng (kg)",
+    "suggestion": "Size {{ size }} fits you with {{ confidence }}% confidence.",
+    "error_generic": "Không thể gợi ý size. Thử lại sau."
   }
 }

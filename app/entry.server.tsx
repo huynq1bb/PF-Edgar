@@ -8,6 +8,14 @@ import { addDocumentResponseHeaders } from "./shopify.server";
 
 export const streamTimeout = 5000;
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export default async function handleRequest(
   request: Request,
   responseStatusCode: number,
@@ -41,7 +49,14 @@ export default async function handleRequest(
           pipe(body);
         },
         onShellError(error) {
-          reject(error);
+          console.error("Shell error:", error);
+          responseHeaders.set("Content-Type", "text/html; charset=utf-8");
+          resolve(
+            new Response(
+              `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title></head><body style="font-family:sans-serif;padding:24px"><h2 style="color:#d72c0d">Application error</h2><pre style="white-space:pre-wrap;word-break:break-word">${escapeHtml(String(error?.message ?? error))}</pre></body></html>`,
+              { headers: responseHeaders, status: 500 }
+            )
+          );
         },
         onError(error) {
           responseStatusCode = 500;

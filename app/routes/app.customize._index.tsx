@@ -1,0 +1,790 @@
+import { useState, useCallback } from "react";
+import type { LoaderFunctionArgs } from "react-router";
+import { useLoaderData, useRouteError, isRouteErrorResponse } from "react-router";
+import { authenticate } from "../shopify.server";
+
+import styles from "../components/customize.module.css";
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  await authenticate.admin(request);
+  return { product: null as string | null };
+};
+
+/* Config types */
+type DefaultMode = "portrait" | "fullbody";
+type Position = "inline" | "floating-bottom" | "floating-right";
+type PopupType = "sheet" | "modal";
+type TypographySize = "s" | "m" | "l";
+type Shadow = "none" | "soft" | "medium";
+type PreviewView = "product-card" | "model-popup" | "closet";
+type PreviewState = "normal" | "loading" | "error" | "closet-empty" | "success-added";
+
+const defaultConfig = {
+  experience: {
+    enableBoth: true,
+    defaultMode: "portrait" as DefaultMode,
+  },
+  productCard: {
+    showTryOn: true,
+    showCloset: true,
+    tryOnLabel: "Try On",
+    closetLabel: "+ Closet",
+    position: "inline" as Position,
+    buttonHeight: 36,
+    cornerRadius: 8,
+  },
+  popup: {
+    type: "sheet" as PopupType,
+    showProductName: true,
+    showCloseButton: true,
+    zoomButton: true,
+    resetButton: true,
+    primaryCta: "Add to Closet" as const,
+    secondaryCta: "Add to Cart" as const,
+  },
+  closet: {
+    showToast: true,
+    autoOpenDrawer: true,
+    badgeCount: true,
+    createLookCta: true,
+  },
+  theme: {
+    primaryColor: "#1f1f1f",
+    secondaryColor: "#d0d0d0",
+    textColor: "#1f1f1f",
+    typographySize: "m" as TypographySize,
+    shadow: "soft" as Shadow,
+  },
+};
+
+function Toggle({
+  on,
+  label,
+  onChange,
+}: { on: boolean; label: string; onChange: (v: boolean) => void }) {
+  return (
+    <div className={styles.toggleRow}>
+      <span className={styles.toggleLabel}>{label}</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        className={`${styles.toggle} ${on ? styles.toggleOn : ""}`}
+        onClick={() => onChange(!on)}
+      >
+        <span className={styles.toggleKnob} />
+      </button>
+    </div>
+  );
+}
+
+function Accordion({
+  id,
+  title,
+  open,
+  onToggle,
+  children,
+}: {
+  id: string;
+  title: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className={styles.accordion} id={id}>
+      <button
+        type="button"
+        id={`${id}-header`}
+        className={styles.accordionHeader}
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-controls={`${id}-content`}
+      >
+        <span>{title}</span>
+        <svg
+          className={`${styles.accordionChevron} ${open ? styles.accordionChevronOpen : ""}`}
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden
+        >
+          <path
+            fillRule="evenodd"
+            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </button>
+      <div
+        id={`${id}-content`}
+        className={`${styles.accordionContent} ${!open ? styles.accordionContentCollapsed : ""}`}
+        role="region"
+        aria-labelledby={`${id}-header`}
+      >
+        <div className={styles.accordionBody}>{children}</div>
+      </div>
+    </section>
+  );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const message = isRouteErrorResponse(error)
+    ? error.data?.message ?? error.statusText
+    : error instanceof Error
+      ? error.message
+      : "Something went wrong";
+  return (
+    <div style={{ padding: 24, fontFamily: "sans-serif" }}>
+      <h2 style={{ color: "#d72c0d" }}>Customize page error</h2>
+      <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{String(message)}</pre>
+    </div>
+  );
+}
+
+export default function CustomizePage() {
+  useLoaderData<typeof loader>();
+  const [config, setConfig] = useState(defaultConfig);
+  const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const [previewZoom, setPreviewZoom] = useState(100);
+  const [view, setView] = useState<PreviewView>("product-card");
+  const [previewState, setPreviewState] = useState<PreviewState>("normal");
+  const [popupMode, setPopupMode] = useState<"portrait" | "fullbody">("portrait");
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    experience: true,
+    productCard: true,
+    popup: true,
+    closet: true,
+    theme: true,
+  });
+
+  const toggleSection = useCallback((key: string) => {
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
+
+  const update = useCallback(<K extends keyof typeof config>(key: K, patch: Partial<typeof config[K]>) => {
+    setConfig((c) => ({ ...c, [key]: { ...c[key], ...patch } }));
+  }, []);
+
+  const saveDraft = () => {
+    setDraftSavedAt("Just now");
+    setTimeout(() => setDraftSavedAt(null), 3000);
+  };
+
+  const publish = () => {
+    // Placeholder: would persist and notify
+  };
+
+  return (
+    <div className={styles.page}>
+      {/* Sticky header */}
+      <header className={styles.header}>
+        <div className={styles.headerLeft}>
+          <h1 className={styles.headerTitle}>Customize Experience</h1>
+          <p className={styles.headerSubtitle}>
+            Model Popup on Product Card + Add to Closet
+          </p>
+        </div>
+        <div className={styles.headerRight}>
+          {draftSavedAt && (
+            <span className={styles.statusChip}>Draft saved {draftSavedAt}</span>
+          )}
+          <button type="button" className={styles.btnSecondary} onClick={saveDraft}>
+            Save Draft
+          </button>
+          <button type="button" className={styles.btnPrimary} onClick={publish}>
+            Publish
+          </button>
+        </div>
+      </header>
+
+      <div className={styles.body}>
+        {/* Left panel — 30% */}
+        <aside className={styles.leftPanel}>
+          <p className={styles.leftPanelTitle}>Styling</p>
+          <Accordion
+            id="accordion-experience"
+            title="A — Experience Mode"
+            open={openSections.experience}
+            onToggle={() => toggleSection("experience")}
+          >
+            <Toggle
+                on={config.experience.enableBoth}
+                label="Enable both modes"
+                onChange={(v) => update("experience", { enableBoth: v })}
+              />
+              <div className={styles.labelRow}>
+                <span className={styles.labelText}>Default mode</span>
+                <select
+                  className={styles.select}
+                  value={config.experience.defaultMode}
+                  onChange={(e) =>
+                    update("experience", {
+                      defaultMode: e.target.value as DefaultMode,
+                    })
+                  }
+                >
+                  <option value="portrait">Portrait</option>
+                  <option value="fullbody">Full-body</option>
+                </select>
+              </div>
+            <p className={styles.note}>
+              System remembers user&apos;s last selected mode.
+            </p>
+          </Accordion>
+
+          <Accordion
+            id="accordion-productCard"
+            title="B — Product Card Trigger"
+            open={openSections.productCard}
+            onToggle={() => toggleSection("productCard")}
+          >
+            <Toggle
+                on={config.productCard.showTryOn}
+                label="Show Try-On button"
+                onChange={(v) => update("productCard", { showTryOn: v })}
+              />
+              <Toggle
+                on={config.productCard.showCloset}
+                label="Show +Closet button"
+                onChange={(v) => update("productCard", { showCloset: v })}
+              />
+              <div className={styles.labelRow}>
+                <span className={styles.labelText}>Try-On label</span>
+                <input
+                  className={styles.input}
+                  value={config.productCard.tryOnLabel}
+                  onChange={(e) =>
+                    update("productCard", { tryOnLabel: e.target.value })
+                  }
+                />
+              </div>
+              <div className={styles.labelRow}>
+                <span className={styles.labelText}>Closet label</span>
+                <input
+                  className={styles.input}
+                  value={config.productCard.closetLabel}
+                  onChange={(e) =>
+                    update("productCard", { closetLabel: e.target.value })
+                  }
+                />
+              </div>
+              <div className={styles.labelRow}>
+                <span className={styles.labelText}>Position</span>
+                <select
+                  className={styles.select}
+                  value={config.productCard.position}
+                  onChange={(e) =>
+                    update("productCard", {
+                      position: e.target.value as Position,
+                    })
+                  }
+                >
+                  <option value="inline">Inline (under price)</option>
+                  <option value="floating-bottom">Floating bottom</option>
+                  <option value="floating-right">Floating right</option>
+                </select>
+              </div>
+              <div className={styles.labelRow}>
+                <span className={styles.labelText}>Button height (px)</span>
+                <div className={styles.sliderRow}>
+                  <input
+                    type="range"
+                    className={styles.slider}
+                    min={24}
+                    max={48}
+                    value={config.productCard.buttonHeight}
+                    onChange={(e) =>
+                      update("productCard", {
+                        buttonHeight: Number(e.target.value),
+                      })
+                    }
+                  />
+                  <span className={styles.sliderValue}>
+                    {config.productCard.buttonHeight}
+                  </span>
+                </div>
+              </div>
+              <div className={styles.labelRow}>
+                <span className={styles.labelText}>Corner radius (px)</span>
+                <div className={styles.sliderRow}>
+                  <input
+                    type="range"
+                    className={styles.slider}
+                    min={0}
+                    max={24}
+                    value={config.productCard.cornerRadius}
+                    onChange={(e) =>
+                      update("productCard", {
+                        cornerRadius: Number(e.target.value),
+                      })
+                    }
+                  />
+                  <span className={styles.sliderValue}>
+                    {config.productCard.cornerRadius}
+                  </span>
+                </div>
+              </div>
+          </Accordion>
+
+          <Accordion
+            id="accordion-popup"
+            title="C — Popup Style"
+            open={openSections.popup}
+            onToggle={() => toggleSection("popup")}
+          >
+            <div className={styles.labelRow}>
+                <span className={styles.labelText}>Popup type</span>
+                <select
+                  className={styles.select}
+                  value={config.popup.type}
+                  onChange={(e) =>
+                    update("popup", { type: e.target.value as PopupType })
+                  }
+                >
+                  <option value="sheet">Bottom sheet (mobile)</option>
+                  <option value="modal">Center modal (desktop)</option>
+                </select>
+              </div>
+              <Toggle
+                on={config.popup.showProductName}
+                label="Show product name"
+                onChange={(v) => update("popup", { showProductName: v })}
+              />
+              <Toggle
+                on={config.popup.showCloseButton}
+                label="Show close button"
+                onChange={(v) => update("popup", { showCloseButton: v })}
+              />
+              <Toggle
+                on={config.popup.zoomButton}
+                label="Zoom button"
+                onChange={(v) => update("popup", { zoomButton: v })}
+              />
+              <Toggle
+                on={config.popup.resetButton}
+                label="Reset button"
+                onChange={(v) => update("popup", { resetButton: v })}
+              />
+            <p className={styles.note}>
+              Primary CTA: Add to Closet · Secondary: Add to Cart
+            </p>
+          </Accordion>
+
+          <Accordion
+            id="accordion-closet"
+            title="D — Closet Behavior"
+            open={openSections.closet}
+            onToggle={() => toggleSection("closet")}
+          >
+            <Toggle
+                on={config.closet.showToast}
+                label="Show toast after Add to Closet"
+                onChange={(v) => update("closet", { showToast: v })}
+              />
+              <Toggle
+                on={config.closet.autoOpenDrawer}
+                label="Auto-open closet drawer"
+                onChange={(v) => update("closet", { autoOpenDrawer: v })}
+              />
+              <Toggle
+                on={config.closet.badgeCount}
+                label="Closet badge count on icon"
+                onChange={(v) => update("closet", { badgeCount: v })}
+              />
+              <Toggle
+                on={config.closet.createLookCta}
+                label="Create Look CTA visibility"
+                onChange={(v) => update("closet", { createLookCta: v })}
+              />
+          </Accordion>
+
+          <Accordion
+            id="accordion-theme"
+            title="E — Theme"
+            open={openSections.theme}
+            onToggle={() => toggleSection("theme")}
+          >
+            <div className={styles.labelRow}>
+                <span className={styles.labelText}>Primary button</span>
+                <div className={styles.colorRow}>
+                  <input
+                    type="color"
+                    className={styles.colorInput}
+                    value={config.theme.primaryColor}
+                    onChange={(e) =>
+                      update("theme", { primaryColor: e.target.value })
+                    }
+                  />
+                  <span className={styles.colorHex}>{config.theme.primaryColor}</span>
+                </div>
+              </div>
+              <div className={styles.labelRow}>
+                <span className={styles.labelText}>Secondary button</span>
+                <div className={styles.colorRow}>
+                  <input
+                    type="color"
+                    className={styles.colorInput}
+                    value={config.theme.secondaryColor}
+                    onChange={(e) =>
+                      update("theme", { secondaryColor: e.target.value })
+                    }
+                  />
+                  <span className={styles.colorHex}>{config.theme.secondaryColor}</span>
+                </div>
+              </div>
+              <div className={styles.labelRow}>
+                <span className={styles.labelText}>Text color</span>
+                <div className={styles.colorRow}>
+                  <input
+                    type="color"
+                    className={styles.colorInput}
+                    value={config.theme.textColor}
+                    onChange={(e) =>
+                      update("theme", { textColor: e.target.value })
+                    }
+                  />
+                  <span className={styles.colorHex}>{config.theme.textColor}</span>
+                </div>
+              </div>
+              <div className={styles.labelRow}>
+                <span className={styles.labelText}>Typography size</span>
+                <select
+                  className={styles.select}
+                  value={config.theme.typographySize}
+                  onChange={(e) =>
+                    update("theme", {
+                      typographySize: e.target.value as TypographySize,
+                    })
+                  }
+                >
+                  <option value="s">S</option>
+                  <option value="m">M</option>
+                  <option value="l">L</option>
+                </select>
+              </div>
+              <div className={styles.labelRow}>
+                <span className={styles.labelText}>Shadow intensity</span>
+                <select
+                  className={styles.select}
+                  value={config.theme.shadow}
+                  onChange={(e) =>
+                    update("theme", { shadow: e.target.value as Shadow })
+                  }
+                >
+                  <option value="none">None</option>
+                  <option value="soft">Soft</option>
+                  <option value="medium">Medium</option>
+                </select>
+              </div>
+          </Accordion>
+        </aside>
+
+        {/* Right panel — 70%: Live Preview */}
+        <div className={styles.rightPanel}>
+          <div className={styles.previewTopBar}>
+            <div className={styles.previewSwitchers}>
+              <span className={styles.previewLabel}>Device:</span>
+              <div className={styles.pillGroup}>
+                <button
+                  type="button"
+                  className={`${styles.pill} ${device === "desktop" ? styles.pillActive : ""}`}
+                  onClick={() => setDevice("desktop")}
+                >
+                  Desktop
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.pill} ${device === "mobile" ? styles.pillActive : ""}`}
+                  onClick={() => setDevice("mobile")}
+                >
+                  Mobile
+                </button>
+              </div>
+              <span className={styles.previewLabel}>View:</span>
+              <div className={styles.pillGroup}>
+                <button
+                  type="button"
+                  className={`${styles.pill} ${view === "product-card" ? styles.pillActive : ""}`}
+                  onClick={() => setView("product-card")}
+                >
+                  Product Card
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.pill} ${view === "model-popup" ? styles.pillActive : ""}`}
+                  onClick={() => setView("model-popup")}
+                >
+                  Model Popup
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.pill} ${view === "closet" ? styles.pillActive : ""}`}
+                  onClick={() => setView("closet")}
+                >
+                  Closet
+                </button>
+              </div>
+            </div>
+            <div className={styles.previewSwitchers}>
+              <span className={styles.previewLabel}>Preview state:</span>
+              <select
+                className={styles.previewStateSelect}
+                value={previewState}
+                onChange={(e) =>
+                  setPreviewState(e.target.value as PreviewState)
+                }
+              >
+                <option value="normal">Normal</option>
+                <option value="loading">Loading try-on</option>
+                <option value="error">Error: image not compatible</option>
+                <option value="closet-empty">Closet empty</option>
+                <option value="success-added">Success: added</option>
+              </select>
+              <span className={styles.previewLabel}>Live preview updates instantly</span>
+              <span className={styles.previewLabel}>Zoom:</span>
+              <div className={styles.zoomControls}>
+                <button
+                  type="button"
+                  className={styles.zoomBtn}
+                  onClick={() => setPreviewZoom((z) => Math.max(50, z - 25))}
+                  aria-label="Zoom out"
+                >
+                  −
+                </button>
+                <span className={styles.zoomValue}>{previewZoom}%</span>
+                <button
+                  type="button"
+                  className={styles.zoomBtn}
+                  onClick={() => setPreviewZoom((z) => Math.min(150, z + 25))}
+                  aria-label="Zoom in"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.previewCanvas}>
+            {/* Viewport mock first; zoom wrapper scales the whole viewport */}
+            <div
+              className={styles.previewCanvasZoomWrap}
+              style={{ transform: `scale(${previewZoom / 100})` }}
+            >
+              <div
+                className={
+                  device === "mobile"
+                    ? styles.viewportMockMobile
+                    : styles.viewportMockDesktop
+                }
+              >
+              <div className={styles.viewportMockInner}>
+                <PreviewContent
+                  view={view}
+                  previewState={previewState}
+                  config={config}
+                  popupMode={popupMode}
+                  setPopupMode={setPopupMode}
+                  isMobile={device === "mobile"}
+                />
+              </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PreviewContent({
+  view,
+  previewState,
+  config,
+  popupMode,
+  setPopupMode,
+  isMobile,
+}: {
+  view: PreviewView;
+  previewState: PreviewState;
+  config: typeof defaultConfig;
+  popupMode: "portrait" | "fullbody";
+  setPopupMode: (m: "portrait" | "fullbody") => void;
+  isMobile: boolean;
+}) {
+  const btnStyle = {
+    height: config.productCard.buttonHeight,
+    borderRadius: config.productCard.cornerRadius,
+    backgroundColor: config.theme.primaryColor,
+    color: "#fff",
+    border: "none",
+    padding: "0 12px",
+    fontSize: 13,
+    cursor: "pointer" as const,
+  };
+  const btnSecStyle = {
+    ...btnStyle,
+    backgroundColor: config.theme.secondaryColor,
+    color: config.theme.textColor,
+  };
+
+  if (view === "product-card") {
+    if (previewState === "loading") {
+      return (
+        <div className={styles.previewStateMessage}>
+          Loading try-on…
+        </div>
+      );
+    }
+    if (previewState === "error") {
+      return (
+        <div className={`${styles.previewStateMessage} ${styles.previewStateError}`}>
+          Image not compatible with try-on.
+        </div>
+      );
+    }
+    return (
+      <div className={styles.cardPreview}>
+        <div className={styles.cardImage} />
+        <div className={styles.cardInfo}>
+          {config.popup.showProductName && (
+            <h3 className={styles.cardTitle}>Sample Product</h3>
+          )}
+          <p className={styles.cardPrice}>$49.00</p>
+          <div className={styles.cardButtons}>
+            {config.productCard.showTryOn && (
+              <button type="button" className={styles.cardBtn} style={btnStyle}>
+                {config.productCard.tryOnLabel}
+              </button>
+            )}
+            {config.productCard.showCloset && (
+              <button type="button" className={styles.cardBtn} style={btnSecStyle}>
+                {config.productCard.closetLabel}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === "model-popup") {
+    if (previewState === "loading") {
+      return (
+        <div className={styles.previewStateMessage}>
+          Loading model…
+        </div>
+      );
+    }
+    if (previewState === "error") {
+      return (
+        <div className={`${styles.previewStateMessage} ${styles.previewStateError}`}>
+          Image not compatible with try-on.
+        </div>
+      );
+    }
+    if (previewState === "success-added") {
+      return (
+        <div className={`${styles.previewStateMessage} ${styles.previewStateSuccess}`}>
+          Added to Closet ✓
+        </div>
+      );
+    }
+    return (
+      <div className={styles.popupPreview}>
+        <div className={styles.popupHeader}>
+          {config.popup.showProductName && (
+            <h3 className={styles.popupTitle}>Sample Product</h3>
+          )}
+          {config.popup.showCloseButton && (
+            <button type="button" className={styles.popupClose} aria-label="Close">
+              ×
+            </button>
+          )}
+        </div>
+        {config.experience.enableBoth && (
+          <div className={styles.popupTabs}>
+            <button
+              type="button"
+              className={`${styles.popupTab} ${popupMode === "portrait" ? styles.popupTabActive : ""}`}
+              onClick={() => setPopupMode("portrait")}
+            >
+              Portrait
+            </button>
+            <button
+              type="button"
+              className={`${styles.popupTab} ${popupMode === "fullbody" ? styles.popupTabActive : ""}`}
+              onClick={() => setPopupMode("fullbody")}
+            >
+              Full-body
+            </button>
+          </div>
+        )}
+        <div className={styles.popupCanvas}>
+          Model canvas mock ({popupMode})
+        </div>
+        {(config.popup.zoomButton || config.popup.resetButton) && (
+          <div className={styles.popupControls}>
+            {config.popup.zoomButton && (
+              <button type="button" className={styles.cardBtn} style={btnSecStyle}>
+                Zoom
+              </button>
+            )}
+            {config.popup.resetButton && (
+              <button type="button" className={styles.cardBtn} style={btnSecStyle}>
+                Reset
+              </button>
+            )}
+          </div>
+        )}
+        <div className={styles.popupCtas}>
+          <button type="button" className={styles.cardBtn} style={btnStyle}>
+            Add to Closet
+          </button>
+          <button type="button" className={styles.cardBtn} style={btnSecStyle}>
+            Add to Cart
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Closet view
+  if (previewState === "closet-empty") {
+    return (
+      <div className={styles.previewStateMessage}>
+        Closet is empty. Add items from product pages.
+      </div>
+    );
+  }
+  return (
+    <div className={styles.closetPreview}>
+      <div className={styles.closetTabs}>
+        <button type="button" className={`${styles.closetTab} ${styles.closetTabActive}`}>
+          All
+        </button>
+        <button type="button" className={styles.closetTab}>Tops</button>
+        <button type="button" className={styles.closetTab}>Bottoms</button>
+        <button type="button" className={styles.closetTab}>Accessories</button>
+      </div>
+      <div className={styles.closetChips}>
+        <button type="button" className={`${styles.chip} ${styles.chipSelected}`}>
+          Item 1
+        </button>
+        <button type="button" className={styles.chip}>Item 2</button>
+        <button type="button" className={styles.chip}>Item 3</button>
+      </div>
+      {config.closet.createLookCta && (
+        <div className={styles.closetFooter}>
+          <button type="button" className={styles.cardBtn} style={btnStyle}>
+            Create Look
+          </button>
+          <button type="button" className={styles.cardBtn} style={btnSecStyle}>
+            Add Full Look to Cart
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

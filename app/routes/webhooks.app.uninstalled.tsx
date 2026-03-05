@@ -15,3 +15,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   return new Response();
 };
+
+export default function WebhookUninstalled() {
+  return null;
+}

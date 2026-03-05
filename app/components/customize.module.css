@@ -591,48 +591,173 @@
   color: #6d7175;
 }
 
-.popupTabs {
+.popupTabsRow {
   flex-shrink: 0;
   display: flex;
-  padding: 0 16px;
-  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 16px;
   border-bottom: 1px solid #e3e3e3;
+  background: #f9fafb;
+}
+
+.popupTabs {
+  display: inline-flex;
+  gap: 4px;
 }
 
 .popupTab {
-  padding: 10px 16px;
+  padding: 6px 12px;
   font-size: 13px;
   border: none;
+  border-radius: 6px;
   background: transparent;
   color: #6d7175;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
+}
+
+.popupTab:hover:not(.popupTabActive) {
+  background: #e1e3e5;
+  color: #1f1f1f;
 }
 
 .popupTabActive {
   color: #1f1f1f;
   font-weight: 600;
-  border-bottom-color: #1f1f1f;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
-.popupCanvas {
+.popupLayerSwitch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.popupLayerLabel {
+  font-size: 12px;
+  color: #6d7175;
+  font-weight: 500;
+}
+
+.popupCanvasArea {
   flex: 1;
   min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: auto;
+}
+
+.popupCanvasSingle {
+  flex: 1;
+  min-height: 140px;
   background: #e1e3e5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.popupCanvasLayer {
+  flex: 1;
+  min-height: 80px;
+  background: #e8eaed;
+  border-bottom: 1px solid #e3e3e3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.popupCanvasLayer:last-of-type {
+  border-bottom: none;
+}
+
+.popupCanvasLayerTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6d7175;
+  text-transform: uppercase;
+}
+
+.popupCanvasBase {
+  width: 100%;
+  max-width: 120px;
+  aspect-ratio: 3/4;
+  background: #e1e3e5;
+  border-radius: 4px;
+}
+
+.popupCanvasLabel {
+  text-align: center;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #6d7175;
+}
+
+.popupItemList {
+  flex-shrink: 0;
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid #e3e3e3;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.popupItemCard {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 72px;
+  padding: 8px;
+  border: 2px solid #e3e3e3;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+}
+
+.popupItemCard:hover {
+  border-color: #c9cccf;
+  background: #f9fafb;
+}
+
+.popupItemCardActive {
+  border-color: #1f1f1f;
+  background: #f1f1f1;
+  box-shadow: 0 0 0 1px #1f1f1f;
+}
+
+.popupItemThumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  background: #e1e3e5;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6d7175;
-  font-size: 14px;
 }
 
-.popupControls {
-  flex-shrink: 0;
-  display: flex;
-  gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid #e3e3e3;
+.popupItemThumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.popupItemName {
+  font-size: 11px;
+  color: #1f1f1f;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
 .popupCtas {

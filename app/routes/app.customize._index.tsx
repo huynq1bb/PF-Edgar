@@ -37,8 +37,6 @@ const defaultConfig = {
     type: "sheet" as PopupType,
     showProductName: true,
     showCloseButton: true,
-    zoomButton: true,
-    resetButton: true,
     primaryCta: "Add to Closet" as const,
     secondaryCta: "Add to Cart" as const,
   },
@@ -55,6 +53,27 @@ const defaultConfig = {
     typographySize: "m" as TypographySize,
     shadow: "soft" as Shadow,
   },
+};
+
+/* Example asset paths for mock/demo (add files under public/examples/ to use real images) */
+const MODEL_PATHS = {
+  portraitBase: "/examples/model/portrait-base.png",
+  fullbodyBase: "/examples/model/fullbody-base.png",
+};
+
+const POPUP_MOCK_ITEMS = {
+  faceAccessories: [
+    { id: "face-1", name: "Glasses", imagePath: "/examples/items/face-glasses-01.png" },
+    { id: "face-2", name: "Hat", imagePath: "/examples/items/face-hat-01.png" },
+  ],
+  top: [
+    { id: "top-1", name: "Shirt", imagePath: "/examples/items/top-shirt-01.png" },
+    { id: "top-2", name: "Jacket", imagePath: "/examples/items/top-jacket-01.png" },
+  ],
+  bottom: [
+    { id: "bottom-1", name: "Jeans", imagePath: "/examples/items/bottom-jeans-01.png" },
+    { id: "bottom-2", name: "Skirt", imagePath: "/examples/items/bottom-skirt-01.png" },
+  ],
 };
 
 function Toggle({
@@ -150,6 +169,10 @@ export default function CustomizePage() {
   const [view, setView] = useState<PreviewView>("product-card");
   const [previewState, setPreviewState] = useState<PreviewState>("normal");
   const [popupMode, setPopupMode] = useState<"portrait" | "fullbody">("portrait");
+  const [popupLayer, setPopupLayer] = useState<"top" | "bottom">("top");
+  const [popupPortraitItemId, setPopupPortraitItemId] = useState<string | null>(null);
+  const [popupTopItemId, setPopupTopItemId] = useState<string | null>(null);
+  const [popupBottomItemId, setPopupBottomItemId] = useState<string | null>(null);
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     experience: true,
@@ -356,16 +379,6 @@ export default function CustomizePage() {
                 on={config.popup.showCloseButton}
                 label="Show close button"
                 onChange={(v) => update("popup", { showCloseButton: v })}
-              />
-              <Toggle
-                on={config.popup.zoomButton}
-                label="Zoom button"
-                onChange={(v) => update("popup", { zoomButton: v })}
-              />
-              <Toggle
-                on={config.popup.resetButton}
-                label="Reset button"
-                onChange={(v) => update("popup", { resetButton: v })}
               />
             <p className={styles.note}>
               Primary CTA: Add to Closet · Secondary: Add to Cart
@@ -586,6 +599,14 @@ export default function CustomizePage() {
                   config={config}
                   popupMode={popupMode}
                   setPopupMode={setPopupMode}
+                  popupLayer={popupLayer}
+                  setPopupLayer={setPopupLayer}
+                  popupPortraitItemId={popupPortraitItemId}
+                  setPopupPortraitItemId={setPopupPortraitItemId}
+                  popupTopItemId={popupTopItemId}
+                  setPopupTopItemId={setPopupTopItemId}
+                  popupBottomItemId={popupBottomItemId}
+                  setPopupBottomItemId={setPopupBottomItemId}
                   isMobile={device === "mobile"}
                 />
               </div>
@@ -604,6 +625,14 @@ function PreviewContent({
   config,
   popupMode,
   setPopupMode,
+  popupLayer,
+  setPopupLayer,
+  popupPortraitItemId,
+  setPopupPortraitItemId,
+  popupTopItemId,
+  setPopupTopItemId,
+  popupBottomItemId,
+  setPopupBottomItemId,
   isMobile,
 }: {
   view: PreviewView;
@@ -611,6 +640,14 @@ function PreviewContent({
   config: typeof defaultConfig;
   popupMode: "portrait" | "fullbody";
   setPopupMode: (m: "portrait" | "fullbody") => void;
+  popupLayer: "top" | "bottom";
+  setPopupLayer: (l: "top" | "bottom") => void;
+  popupPortraitItemId: string | null;
+  setPopupPortraitItemId: (id: string | null) => void;
+  popupTopItemId: string | null;
+  setPopupTopItemId: (id: string | null) => void;
+  popupBottomItemId: string | null;
+  setPopupBottomItemId: (id: string | null) => void;
   isMobile: boolean;
 }) {
   const btnStyle = {
@@ -691,6 +728,32 @@ function PreviewContent({
         </div>
       );
     }
+    const isPortrait = popupMode === "portrait";
+    const portraitItem = popupPortraitItemId
+      ? POPUP_MOCK_ITEMS.faceAccessories.find((i) => i.id === popupPortraitItemId)
+      : null;
+    const topItem = popupTopItemId
+      ? POPUP_MOCK_ITEMS.top.find((i) => i.id === popupTopItemId)
+      : null;
+    const bottomItem = popupBottomItemId
+      ? POPUP_MOCK_ITEMS.bottom.find((i) => i.id === popupBottomItemId)
+      : null;
+    const listItems = isPortrait
+      ? POPUP_MOCK_ITEMS.faceAccessories
+      : popupLayer === "top"
+        ? POPUP_MOCK_ITEMS.top
+        : POPUP_MOCK_ITEMS.bottom;
+    const activeItemId = isPortrait
+      ? popupPortraitItemId
+      : popupLayer === "top"
+        ? popupTopItemId
+        : popupBottomItemId;
+    const setActiveItemId = isPortrait
+      ? setPopupPortraitItemId
+      : popupLayer === "top"
+        ? setPopupTopItemId
+        : setPopupBottomItemId;
+
     return (
       <div className={styles.popupPreview}>
         <div className={styles.popupHeader}>
@@ -704,46 +767,103 @@ function PreviewContent({
           )}
         </div>
         {config.experience.enableBoth && (
-          <div className={styles.popupTabs}>
-            <button
-              type="button"
-              className={`${styles.popupTab} ${popupMode === "portrait" ? styles.popupTabActive : ""}`}
-              onClick={() => setPopupMode("portrait")}
-            >
-              Portrait
-            </button>
-            <button
-              type="button"
-              className={`${styles.popupTab} ${popupMode === "fullbody" ? styles.popupTabActive : ""}`}
-              onClick={() => setPopupMode("fullbody")}
-            >
-              Full-body
-            </button>
+          <div className={styles.popupTabsRow}>
+            <div className={styles.popupTabs}>
+              <button
+                type="button"
+                className={`${styles.popupTab} ${popupMode === "portrait" ? styles.popupTabActive : ""}`}
+                onClick={() => setPopupMode("portrait")}
+              >
+                Portrait
+              </button>
+              <button
+                type="button"
+                className={`${styles.popupTab} ${popupMode === "fullbody" ? styles.popupTabActive : ""}`}
+                onClick={() => setPopupMode("fullbody")}
+              >
+                Full-body
+              </button>
+            </div>
+            {!isPortrait && (
+              <div className={styles.popupLayerSwitch}>
+                <span className={styles.popupLayerLabel}>Layer:</span>
+                <div className={styles.pillGroup}>
+                  <button
+                    type="button"
+                    className={`${styles.pill} ${popupLayer === "top" ? styles.pillActive : ""}`}
+                    onClick={() => setPopupLayer("top")}
+                  >
+                    Top
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.pill} ${popupLayer === "bottom" ? styles.pillActive : ""}`}
+                    onClick={() => setPopupLayer("bottom")}
+                  >
+                    Bottom
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
-        <div className={styles.popupCanvas}>
-          Model canvas mock ({popupMode})
+        <div className={styles.popupCanvasArea}>
+          {isPortrait ? (
+            <div className={styles.popupCanvasSingle}>
+              <div className={styles.popupCanvasBase} title={MODEL_PATHS.portraitBase} />
+              {portraitItem && (
+                <span className={styles.popupCanvasLabel}>
+                  {portraitItem.name} on portrait
+                </span>
+              )}
+              {!portraitItem && (
+                <span className={styles.popupCanvasLabel}>Select face accessory</span>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className={styles.popupCanvasLayer}>
+                <span className={styles.popupCanvasLayerTitle}>Top</span>
+                <div className={styles.popupCanvasBase} title={MODEL_PATHS.fullbodyBase} />
+                {topItem ? (
+                  <span className={styles.popupCanvasLabel}>{topItem.name}</span>
+                ) : (
+                  <span className={styles.popupCanvasLabel}>Select top</span>
+                )}
+              </div>
+              <div className={styles.popupCanvasLayer}>
+                <span className={styles.popupCanvasLayerTitle}>Bottom</span>
+                <div className={styles.popupCanvasBase} />
+                {bottomItem ? (
+                  <span className={styles.popupCanvasLabel}>{bottomItem.name}</span>
+                ) : (
+                  <span className={styles.popupCanvasLabel}>Select bottom</span>
+                )}
+              </div>
+            </>
+          )}
         </div>
-        {(config.popup.zoomButton || config.popup.resetButton) && (
-          <div className={styles.popupControls}>
-            {config.popup.zoomButton && (
-              <button type="button" className={styles.cardBtn} style={btnSecStyle}>
-                Zoom
-              </button>
-            )}
-            {config.popup.resetButton && (
-              <button type="button" className={styles.cardBtn} style={btnSecStyle}>
-                Reset
-              </button>
-            )}
-          </div>
-        )}
+        <div className={styles.popupItemList}>
+          {listItems.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`${styles.popupItemCard} ${activeItemId === item.id ? styles.popupItemCardActive : ""}`}
+              onClick={() => setActiveItemId(item.id)}
+            >
+              <div className={styles.popupItemThumb}>
+                <img src={item.imagePath} alt="" className={styles.popupItemThumbImg} />
+              </div>
+              <span className={styles.popupItemName}>{item.name}</span>
+            </button>
+          ))}
+        </div>
         <div className={styles.popupCtas}>
           <button type="button" className={styles.cardBtn} style={btnStyle}>
-            Add to Closet
+            {config.popup.primaryCta}
           </button>
           <button type="button" className={styles.cardBtn} style={btnSecStyle}>
-            Add to Cart
+            {config.popup.secondaryCta}
           </button>
         </div>
       </div>

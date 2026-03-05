@@ -1126,51 +1126,17 @@ function PreviewContent({
         </div>
       ) : (
         <>
-          {/* Selected Preview Bar */}
-          <div className={styles.closetSelectionBar}>
-            <div className={`${styles.closetSelectionSlot} ${!closetTopItem ? styles.closetSelectionSlotEmpty : ""}`}>
+          {/* Image-only preview: upper = top item, lower = bottom item */}
+          <div className={styles.closetPreviewSlots}>
+            <div className={`${styles.closetPreviewSlot} ${!closetTopItem ? styles.closetPreviewSlotEmpty : ""}`}>
               {closetTopItem ? (
-                <>
-                  <div className={styles.closetSelectionSlotThumb}>
-                    <img src={closetTopItem.image} alt="" className={styles.closetSelectionSlotThumbImg} />
-                  </div>
-                  <p className={styles.closetSelectionSlotLabel}>Top: {closetTopItem.name}</p>
-                </>
-              ) : (
-                <p className={styles.closetSelectionSlotPlaceholder}>Top: Select</p>
-              )}
+                <img src={closetTopItem.image} alt="" className={styles.closetPreviewSlotImg} />
+              ) : null}
             </div>
-            <div className={`${styles.closetSelectionSlot} ${!closetBottomItem ? styles.closetSelectionSlotEmpty : ""}`}>
+            <div className={`${styles.closetPreviewSlot} ${!closetBottomItem ? styles.closetPreviewSlotEmpty : ""}`}>
               {closetBottomItem ? (
-                <>
-                  <div className={styles.closetSelectionSlotThumb}>
-                    <img src={closetBottomItem.image} alt="" className={styles.closetSelectionSlotThumbImg} />
-                  </div>
-                  <p className={styles.closetSelectionSlotLabel}>Bottom: {closetBottomItem.name}</p>
-                </>
-              ) : (
-                <p className={styles.closetSelectionSlotPlaceholder}>Bottom: Select</p>
-              )}
-            </div>
-          </div>
-
-          {/* Combined demo look preview (top + bottom on model) */}
-          <div className={styles.closetLookPreview}>
-            <div className={styles.closetLookPreviewInner}>
-              <div className={styles.closetLookPreviewLayer}>
-                <div
-                  className={styles.closetLookPreviewLayerBase}
-                  style={{ backgroundImage: EXAMPLE_MODEL.fullBodyBase ? `url(${EXAMPLE_MODEL.fullBodyBase})` : undefined }}
-                />
-                {closetTopItem && <span className={styles.closetLookPreviewLayerLabel}>Top: {closetTopItem.name}</span>}
-              </div>
-              <div className={styles.closetLookPreviewLayer}>
-                <div
-                  className={styles.closetLookPreviewLayerBase}
-                  style={{ backgroundImage: EXAMPLE_MODEL.fullBodyBase ? `url(${EXAMPLE_MODEL.fullBodyBase})` : undefined }}
-                />
-                {closetBottomItem && <span className={styles.closetLookPreviewLayerLabel}>Bottom: {closetBottomItem.name}</span>}
-              </div>
+                <img src={closetBottomItem.image} alt="" className={styles.closetPreviewSlotImg} />
+              ) : null}
             </div>
           </div>
 
@@ -1199,7 +1165,23 @@ function PreviewContent({
                 <p className={styles.previewStateMessage}>No items match.</p>
               ) : (
                 filteredItems.map((item) => (
-                  <div key={item.id} className={styles.closetItemCard}>
+                  <div
+                    key={item.id}
+                    className={styles.closetItemCard}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      if (item.category === "top") setPopupTopItemIdFromCloset(item.id);
+                      if (item.category === "bottom") setPopupBottomItemIdFromCloset(item.id);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        if (item.category === "top") setPopupTopItemIdFromCloset(item.id);
+                        if (item.category === "bottom") setPopupBottomItemIdFromCloset(item.id);
+                      }
+                    }}
+                  >
                     <div className={styles.closetItemThumb}>
                       <img src={item.image} alt="" className={styles.closetItemThumbImg} />
                     </div>
@@ -1208,25 +1190,7 @@ function PreviewContent({
                       <p className={styles.closetItemPrice}>${"price" in item ? item.price : "—"}</p>
                     </div>
                     <span className={styles.closetItemBadge}>{item.category}</span>
-                    <div className={styles.closetItemActions}>
-                      {item.category === "top" && (
-                        <button
-                          type="button"
-                          className={styles.closetItemActionBtn}
-                          onClick={() => setPopupTopItemIdFromCloset(item.id)}
-                        >
-                          Use as Top
-                        </button>
-                      )}
-                      {item.category === "bottom" && (
-                        <button
-                          type="button"
-                          className={styles.closetItemActionBtn}
-                          onClick={() => setPopupBottomItemIdFromCloset(item.id)}
-                        >
-                          Use as Bottom
-                        </button>
-                      )}
+                    <div className={styles.closetItemActions} onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         className={`${styles.closetItemActionBtn} ${styles.closetItemActionBtnFavorite}`}

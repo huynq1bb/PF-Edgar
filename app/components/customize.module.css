@@ -833,110 +833,35 @@
   font-weight: 600;
 }
 
-/* Selected Preview Bar (Top/Bottom selection in closet) */
-.closetSelectionBar {
+/* Closet: image-only preview slots (upper = top, lower = bottom) */
+.closetPreviewSlots {
   flex-shrink: 0;
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 6px;
   padding: 12px 16px;
   border-bottom: 1px solid #e3e3e3;
   background: #f9fafb;
 }
 
-.closetSelectionSlot {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  background: #fff;
-  border: 1px solid #e3e3e3;
+.closetPreviewSlot {
+  width: 100%;
+  aspect-ratio: 3/4;
+  max-height: 120px;
   border-radius: 8px;
-  min-width: 0;
-}
-
-.closetSelectionSlotEmpty {
-  border-style: dashed;
-  color: #6d7175;
-}
-
-.closetSelectionSlotThumb {
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border-radius: 6px;
   overflow: hidden;
   background: #e3e3e3;
 }
 
-.closetSelectionSlotThumbImg {
+.closetPreviewSlotEmpty {
+  background: #e8eaed;
+  border: 1px dashed #c9cccf;
+}
+
+.closetPreviewSlotImg {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.closetSelectionSlotLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: #1f1f1f;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.closetSelectionSlotPlaceholder {
-  font-size: 12px;
-  color: #6d7175;
-  margin: 0;
-}
-
-/* Combined look preview (model + top + bottom) in closet */
-.closetLookPreview {
-  flex-shrink: 0;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e3e3e3;
-  background: #f1f1f1;
-}
-
-.closetLookPreviewInner {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #fff;
-}
-
-.closetLookPreviewLayer {
-  position: relative;
-  min-height: 72px;
-  background: #e8e8e8;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.closetLookPreviewLayerBase {
-  width: 100%;
-  height: 100%;
-  min-height: 72px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.closetLookPreviewLayerLabel {
-  position: absolute;
-  bottom: 6px;
-  left: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #1f1f1f;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 2px 8px;
-  border-radius: 4px;
 }
 
 /* Sticky Save Look footer in closet */

@@ -32,3 +32,85 @@ model Session {
   refreshToken        String?
   refreshTokenExpires DateTime?
 }
+
+// Smart Cross-sell: rules for "often bought together" recommendations
+model CrossSellRule {
+  id                    String   @id @default(cuid())
+  shop                  String
+  name                  String   // merchant-facing label
+  triggerType           String   @default("product") // "product" | "collection"
+  triggerValue          String   // main product GID (or collection GID for old rules)
+  suggestedProductId1   String?  // fixed suggest product GID
+  suggestedProductId2   String?
+  suggestedProductId3   String?
+  filterCollectionId    String?
+  filterPriceMin        Float?
+  filterPriceMax        Float?
+  filterTags            String?
+  maxRecommendations   Int      @default(3)
+  priority              Int      @default(0)
+  enabled               Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([shop, enabled])
+}
+
+// Store-default size chart: one row per size per shop (height/weight in cm/kg).
+model SizeChartEntry {
+  id         String   @id @default(cuid())
+  shop       String
+  sizeName   String   // e.g. "S", "M", "L", "XL"
+  heightMin  Float    // cm
+  heightMax  Float    // cm
+  weightMin  Float    // kg
+  weightMax  Float    // kg
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([shop, sizeName])
+  @@index([shop])
+}
+
+// AI Size Predict: feature toggle + widget display settings (one per shop).
+model SizePredictSettings {
+  id             String   @id @default(cuid())
+  shop           String   @unique
+  widgetEnabled  Boolean  @default(true)
+  buttonLabel    String   @default("Find my size")
+  helperText     String   @default("Let AI suggest the best size for you")
+  heightUnit     String   @default("cm")
+  weightUnit     String   @default("kg")
+  autoSelectSize Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// Prediction rule: scope (all / product type / collection / product) + name + status.
+model SizePredictRule {
+  id         String   @id @default(cuid())
+  shop       String
+  name       String
+  scopeType  String   // "all" | "product_type" | "collection" | "product"
+  scopeValue String?  // product type name, collection GID, or product GID
+  status     String   @default("active") // "active" | "disabled"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  mappings   SizePredictRuleMapping[]
+
+  @@index([shop])
+}
+
+// Height/weight -> size mapping for one rule.
+model SizePredictRuleMapping {
+  id         String   @id @default(cuid())
+  ruleId     String
+  rule       SizePredictRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  sizeName   String
+  heightMin  Float
+  heightMax  Float
+  weightMin  Float
+  weightMax  Float
+
+  @@index([ruleId])
+}

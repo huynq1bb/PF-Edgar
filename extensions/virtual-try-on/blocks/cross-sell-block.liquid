@@ -1,0 +1,57 @@
+{% comment %}
+  Cross-sell block: "Thường được mua cùng" – uses recommendation API, Add to cart / Add all.
+{% endcomment %}
+<div
+  class="cross-sell-block"
+  data-cross-sell
+  data-shop="{{ shop.permanent_domain }}"
+  data-product-id="{{ block.settings.product.id | default: product.id }}"
+  data-api-base="{{ block.settings.api_base | default: '' }}"
+  data-heading="{{ block.settings.heading | default: 'Thường được mua cùng' }}"
+>
+  <h3 class="cross-sell-block__heading">{{ block.settings.heading | default: 'Thường được mua cùng' }}</h3>
+  <div class="cross-sell-block__list" data-recommendations aria-live="polite"></div>
+  <div class="cross-sell-block__add-all" data-add-all-wrap style="display: none;">
+    <button type="button" class="cross-sell-block__add-all-btn" data-add-all>
+      {{ block.settings.add_all_label | default: 'Thêm tất cả vào giỏ' }}
+    </button>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Cross-sell",
+  "target": "section",
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "settings": [
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product",
+      "autofill": true
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Thường được mua cùng"
+    },
+    {
+      "type": "text",
+      "id": "api_base",
+      "label": "Recommendation API base URL",
+      "info": "Your app URL (e.g. https://your-app.com). Leave blank if using App Proxy at /apps/recommend."
+    },
+    {
+      "type": "text",
+      "id": "add_all_label",
+      "label": "Add all to cart button label",
+      "default": "Thêm tất cả vào giỏ"
+    }
+  ],
+  "stylesheet": "cross-sell-block.css",
+  "javascript": "cross-sell-block.js"
+}
+{% endschema %}

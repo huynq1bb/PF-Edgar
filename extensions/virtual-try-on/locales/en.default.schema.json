@@ -1,5 +1,12 @@
 {
   "virtual_try_on": {
     "name": "Virtual Try-On"
+  },
+  "size_predict": {
+    "name": "AI Size Predict",
+    "height_label": "Chiều cao (cm)",
+    "weight_label": "Cân nặng (kg)",
+    "suggestion": "Size {{ size }} fits you with {{ confidence }}% confidence.",
+    "error_generic": "Could not get size suggestion."
   }
 }

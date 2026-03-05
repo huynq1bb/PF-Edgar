@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "68d579d161b008f9fda71c24d70f4897"
-name = "Tuble-app"
+client_id = "4a3bd07a6cb78606fd74ebaf6c85a0e3"
+name = "AI-tuble"
 application_url = "https://example.com"
 embedded = true
 
@@ -14,12 +14,7 @@ api_version = "2026-04"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products,read_products,write_app_proxy"
-
-[app_proxy]
-url = "/size-predict-proxy"
-prefix = "apps"
-subpath = "size-predict"
+scopes = "write_products"
 
 [auth]
 redirect_urls = [ "https://example.com/api/auth" ]

@@ -32,6 +32,8 @@ export default function App() {
           <s-link href="/app/customize">Customize</s-link>
           <s-link href="/app/products">Products</s-link>
           <s-link href="/app/closet">Closet</s-link>
+          <s-link href="/app/cross-sell">Cross-sell rules</s-link>
+          <s-link href="/app/size-chart">Size prediction</s-link>
           <s-link href="/app/additional">Additional page</s-link>
           <s-link href="/app/analytics">Analytics</s-link>
         </s-app-nav>

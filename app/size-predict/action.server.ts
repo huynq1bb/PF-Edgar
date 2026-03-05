@@ -66,7 +66,7 @@ export async function sizePredictAction({ request }: ActionFunctionArgs): Promis
     if (!settingsRepo) return { ok: false, error: "Run npm run setup to update the database." };
     const payload = {
       buttonLabel: String(formData.get("buttonLabel") ?? "Find my size"),
-      helperText: String(formData.get("helperText") ?? "Let AI suggest the best size for you"),
+      helperText: String(formData.get("helperText") ?? "Suggest the best size for you"),
       heightUnit: String(formData.get("heightUnit") ?? "cm"),
       weightUnit: String(formData.get("weightUnit") ?? "kg"),
       autoSelectSize: formData.get("autoSelectSize") === "true",

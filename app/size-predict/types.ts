@@ -63,6 +63,20 @@ export type SizePredictLoaderData = {
   rules: SizePredictRule[];
   products: Array<{ id: string; title: string }>;
   collections: Array<{ id: string; title: string }>;
+  /** Product for Preview tab: "The Collection Snowboard: Liquid" (or first match). */
+  previewProduct: {
+    id: string;
+    title: string;
+    handle: string;
+    featuredImageUrl: string | null;
+    images: string[];
+    options: Array<{ name: string; values: string[] }>;
+    variants: Array<{
+      id: string;
+      title: string;
+      selectedOptions: Array<{ name: string; value: string }>;
+    }>;
+  } | null;
 };
 
 /** Returns set of row indices that overlap (height or weight range) with another row. */

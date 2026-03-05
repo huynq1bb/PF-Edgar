@@ -3,7 +3,7 @@
     "name": "Virtual Try-On"
   },
   "size_predict": {
-    "name": "AI Size Predict",
+    "name": "Size prediction",
     "height_label": "Chiều cao (cm)",
     "weight_label": "Cân nặng (kg)",
     "suggestion": "Size {{ size }} fits you with {{ confidence }}% confidence.",

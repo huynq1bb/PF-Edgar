@@ -5,11 +5,9 @@
   const trigger = block.querySelector('[data-try-on-trigger]');
   const placeholder = block.querySelector('[data-try-on-placeholder]');
 
-  if (trigger) {
+  if (trigger && placeholder) {
     trigger.addEventListener('click', function () {
-      if (placeholder) {
-        placeholder.setAttribute('aria-hidden', 'false');
-      }
+      placeholder.setAttribute('aria-hidden', 'false');
       // TODO: mở modal/form nhập chỉ số + chọn sản phẩm, gọi API Try-On
     });
   }

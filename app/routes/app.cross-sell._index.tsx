@@ -41,11 +41,11 @@ export default function CrossSellIndex() {
                 borderRadius="base"
                 background="subdued"
               >
-                <s-stack direction="block" gap="tight">
+                <s-stack direction="block">
                   <s-stack direction="inline" gap="base">
-                    <s-text fontWeight="bold">{rule.name}</s-text>
+                    <s-text>{rule.name}</s-text>
                     {!rule.enabled && (
-                      <s-text tone="subdued">(disabled)</s-text>
+                      <s-text>(disabled)</s-text>
                     )}
                   </s-stack>
                   <s-paragraph>
@@ -54,7 +54,7 @@ export default function CrossSellIndex() {
                   <s-paragraph>
                     Gợi ý: {[rule.suggestedProductId1, rule.suggestedProductId2, rule.suggestedProductId3].filter(Boolean).join(" · ") || "—"}
                   </s-paragraph>
-                  <s-stack direction="inline" gap="tight">
+                  <s-stack direction="inline" gap="base">
                     <Link to={`/app/cross-sell/${rule.id}`} style={{ textDecoration: "none" }}>
                       <s-button variant="secondary">Edit</s-button>
                     </Link>

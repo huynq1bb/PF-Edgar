@@ -32,3 +32,26 @@ model Session {
   refreshToken        String?
   refreshTokenExpires DateTime?
 }
+
+// Smart Cross-sell: rules for "often bought together" recommendations
+model CrossSellRule {
+  id                    String   @id @default(cuid())
+  shop                  String
+  name                  String   // merchant-facing label
+  triggerType           String   @default("product") // "product" | "collection"
+  triggerValue          String   // main product GID (or collection GID for old rules)
+  suggestedProductId1   String?  // fixed suggest product GID
+  suggestedProductId2   String?
+  suggestedProductId3   String?
+  filterCollectionId    String?
+  filterPriceMin        Float?
+  filterPriceMax        Float?
+  filterTags            String?
+  maxRecommendations   Int      @default(3)
+  priority              Int      @default(0)
+  enabled               Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([shop, enabled])
+}

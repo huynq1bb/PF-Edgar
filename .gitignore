@@ -16,6 +16,9 @@ database.sqlite
 .env
 .env.*
 
+# SSH keys (never commit private keys)
+.ssh/
+
 package-lock.json
 yarn.lock
 pnpm-lock.yaml

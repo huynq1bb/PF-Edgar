@@ -114,3 +114,27 @@ model SizePredictRuleMapping {
 
   @@index([ruleId])
 }
+
+// Try-On Performance Analytics events from storefront
+model TryOnEvent {
+  id          String   @id @default(cuid())
+  shop        String
+  eventType   String   // try_on_started | try_on_completed | add_to_cart_after_try_on
+  productId   String?  // Shopify GID, e.g. gid://shopify/Product/123
+  productTitle String?
+  sessionId   String?  // browser/session ID to link try-on and add-to-cart in same session
+  createdAt   DateTime @default(now())
+
+  @@index([shop, eventType, createdAt])
+  @@index([shop, productId, eventType])
+}
+
+// Google Analytics GA4 connection per shop
+model GoogleAnalyticsConfig {
+  id              String   @id @default(cuid())
+  shop            String   @unique
+  measurementId   String   // e.g. G-XXXXXXX
+  propertyName    String?  // optional display name, e.g. fashion-store-analytics
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

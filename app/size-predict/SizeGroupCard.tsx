@@ -217,7 +217,7 @@ export function SizeGroupCard({
 
         <s-text type="strong">Phạm vi áp dụng (Product Assignment)</s-text>
         <s-paragraph>
-          Phần này giúp AI biết quy tắc nào áp dụng cho sản phẩm nào.
+          Phần này giúp biết quy tắc nào áp dụng cho sản phẩm nào.
         </s-paragraph>
         <s-stack direction="block" gap="small">
           <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>

@@ -1,6 +1,6 @@
 # Size prediction feature
 
-Toàn bộ code liên quan **AI Size Predict** (settings, size groups, test prediction, widget) nằm trong folder này. Mọi thay đổi phát sinh nên được cập nhật tại đây.
+Toàn bộ code liên quan **Size prediction** (settings, size groups, test prediction, widget) nằm trong folder này. Mọi thay đổi phát sinh nên được cập nhật tại đây.
 
 ## Cấu trúc
 

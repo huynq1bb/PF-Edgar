@@ -73,17 +73,42 @@ const inputStyle = {
 };
 const labelStyle = { display: "block", marginBottom: "4px", fontWeight: 500 as const };
 
-function ProductPreviewCard({ product, label }: { product: ProductPreview | null; label: string }) {
-  if (!product) return <div style={{ padding: "12px", background: "#f6f6f7", borderRadius: "8px", fontSize: "13px", color: "#666" }}>{label}: Chưa có dữ liệu</div>;
+function ProductPreviewCard({ product, label, isMain = false }: { product: ProductPreview | null; label: string; isMain?: boolean }) {
+  if (!product) {
+    return (
+      <div style={{
+        padding: isMain ? "20px" : "12px",
+        background: isMain ? "#f0f4ff" : "#f6f6f7",
+        borderRadius: "10px",
+        fontSize: isMain ? "14px" : "13px",
+        color: "#666",
+        border: isMain ? "2px dashed #5c6ac4" : "1px solid #e1e3e5",
+      }}>
+        {label}: Chưa có dữ liệu
+      </div>
+    );
+  }
   return (
-    <div style={{ border: "1px solid #e1e3e5", borderRadius: "8px", overflow: "hidden", background: "#fff" }}>
-      <div style={{ padding: "8px", fontWeight: 600, fontSize: "12px", background: "#fafafa" }}>{label}</div>
+    <div style={{
+      border: isMain ? "2px solid #5c6ac4" : "1px solid #e1e3e5",
+      borderRadius: isMain ? "12px" : "8px",
+      overflow: "hidden",
+      background: isMain ? "#fafbff" : "#fff",
+      boxShadow: isMain ? "0 4px 12px rgba(92, 106, 196, 0.15)" : "none",
+    }}>
+      <div style={{
+        padding: isMain ? "12px 14px" : "8px",
+        fontWeight: 700,
+        fontSize: isMain ? "14px" : "12px",
+        background: isMain ? "#5c6ac4" : "#fafafa",
+        color: isMain ? "#fff" : "inherit",
+      }}>{label}</div>
       {product.imageUrl && (
         <img src={product.imageUrl} alt="" style={{ width: "100%", aspectRatio: "1", objectFit: "cover" }} />
       )}
-      <div style={{ padding: "12px" }}>
-        <div style={{ fontWeight: 600, marginBottom: "4px" }}>{product.title}</div>
-        <div style={{ fontSize: "12px", color: "#666", lineHeight: 1.4 }}>{product.description || "—"}</div>
+      <div style={{ padding: isMain ? "16px" : "12px" }}>
+        <div style={{ fontWeight: 600, marginBottom: "4px", fontSize: isMain ? "15px" : "14px" }}>{product.title}</div>
+        <div style={{ fontSize: isMain ? "13px" : "12px", color: "#666", lineHeight: 1.4 }}>{product.description || "—"}</div>
       </div>
     </div>
   );
@@ -224,8 +249,8 @@ export default function CrossSellNew() {
                   {isPreviewLoading ? "Đang tải…" : "Xem preview"}
                 </button>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "12px" }}>
-                <ProductPreviewCard product={previewTrigger} label="Sản phẩm chính" />
+              <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr 1fr 1fr", gap: "12px" }}>
+                <ProductPreviewCard product={previewTrigger} label="Main product" isMain />
                 <ProductPreviewCard product={preview1} label="Suggest 1" />
                 <ProductPreviewCard product={preview2} label="Suggest 2" />
                 <ProductPreviewCard product={preview3} label="Suggest 3" />

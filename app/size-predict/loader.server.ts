@@ -40,7 +40,7 @@ export async function sizePredictLoader({ request }: LoaderFunctionArgs): Promis
         >;
       };
 
-  const [settings, rules, products, collections] = await Promise.all([
+  const [settings, rules, products, collections, previewProductRaw] = await Promise.all([
     settingsRepo ? settingsRepo.findUnique({ where: { shop } }).catch(() => null) : Promise.resolve(null),
     rulesRepo
       ? rulesRepo.findMany({ where: { shop }, include: { mappings: true }, orderBy: { createdAt: "desc" } }).catch(() => [])
@@ -65,6 +65,89 @@ export async function sizePredictLoader({ request }: LoaderFunctionArgs): Promis
       .then((j: { data?: { collections?: { edges?: Array<{ node: { id: string; title: string } }> } } }) =>
         (j.data?.collections?.edges ?? []).map((e) => e.node)
       ),
+    admin
+      .graphql(
+        `#graphql
+        query getPreviewProduct($query: String!) {
+          products(first: 5, query: $query) {
+            edges {
+              node {
+                id
+                title
+                handle
+                featuredImage {
+                  url
+                }
+                images(first: 10) {
+                  edges {
+                    node {
+                      url
+                    }
+                  }
+                }
+                options {
+                  name
+                  values
+                }
+                variants(first: 100) {
+                  edges {
+                    node {
+                      id
+                      title
+                      selectedOptions {
+                        name
+                        value
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `,
+        {
+          variables: { query: 'title:"The Collection Snowboard: Liquid"' },
+        }
+      )
+      .then((r: Response) => r.json())
+      .then((j: {
+        data?: {
+          products?: {
+            edges?: Array<{
+              node: {
+                id: string;
+                title: string;
+                handle: string;
+                featuredImage?: { url: string } | null;
+                images?: { edges: Array<{ node: { url: string } }> };
+                options: Array<{ name: string; values: string[] }>;
+                variants: { edges: Array<{ node: { id: string; title: string; selectedOptions: Array<{ name: string; value: string }> } }> };
+              };
+            }>;
+          };
+        };
+      }) => {
+        const edges = j.data?.products?.edges ?? [];
+        const node = edges[0]?.node;
+        if (!node) return null;
+        const variants = (node.variants?.edges ?? []).map((e) => ({
+          id: e.node.id,
+          title: e.node.title,
+          selectedOptions: e.node.selectedOptions ?? [],
+        }));
+        const images = (node.images?.edges ?? []).map((e) => e.node.url);
+        return {
+          id: node.id,
+          title: node.title,
+          handle: node.handle,
+          featuredImageUrl: node.featuredImage?.url ?? null,
+          images,
+          options: node.options ?? [],
+          variants,
+        };
+      })
+      .catch(() => null),
   ]);
 
   return {
@@ -80,7 +163,7 @@ export async function sizePredictLoader({ request }: LoaderFunctionArgs): Promis
       : {
           widgetEnabled: true,
           buttonLabel: "Find my size",
-          helperText: "Let AI suggest the best size for you",
+          helperText: "Suggest the best size for you",
           heightUnit: "cm",
           weightUnit: "kg",
           autoSelectSize: true,
@@ -102,5 +185,6 @@ export async function sizePredictLoader({ request }: LoaderFunctionArgs): Promis
     })),
     products: products ?? [],
     collections: collections ?? [],
+    previewProduct: previewProductRaw ?? null,
   };
 }

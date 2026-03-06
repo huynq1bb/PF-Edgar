@@ -55,26 +55,14 @@ const defaultConfig = {
   },
 };
 
-/* Example asset paths for mock/demo (add files under public/examples/ to use real images) */
-const MODEL_PATHS = {
-  portraitBase: "/examples/model/portrait-base.png",
-  fullbodyBase: "/examples/model/fullbody-base.png",
-};
-
-const POPUP_MOCK_ITEMS = {
-  faceAccessories: [
-    { id: "face-1", name: "Glasses", imagePath: "/examples/items/face-glasses-01.png" },
-    { id: "face-2", name: "Hat", imagePath: "/examples/items/face-hat-01.png" },
-  ],
-  top: [
-    { id: "top-1", name: "Shirt", imagePath: "/examples/items/top-shirt-01.png" },
-    { id: "top-2", name: "Jacket", imagePath: "/examples/items/top-jacket-01.png" },
-  ],
-  bottom: [
-    { id: "bottom-1", name: "Jeans", imagePath: "/examples/items/bottom-jeans-01.png" },
-    { id: "bottom-2", name: "Skirt", imagePath: "/examples/items/bottom-skirt-01.png" },
-  ],
-};
+import {
+  EXAMPLE_MODEL,
+  EXAMPLE_ITEMS,
+  closetItems,
+  ALL_CLOSET_ITEMS,
+  type SavedLook,
+  SAVE_LOOK_TAGS,
+} from "../data/exampleItems";
 
 function Toggle({
   on,
@@ -174,6 +162,23 @@ export default function CustomizePage() {
   const [popupTopItemId, setPopupTopItemId] = useState<string | null>(null);
   const [popupBottomItemId, setPopupBottomItemId] = useState<string | null>(null);
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  const [closetTab, setClosetTab] = useState<"all" | "top" | "bottom" | "saved">("all");
+  const [closetSearch, setClosetSearch] = useState("");
+  const [closetFilters, setClosetFilters] = useState<Record<string, boolean>>({
+    top: false,
+    bottom: false,
+    favorite: false,
+    inStock: false,
+  });
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [savedLooks, setSavedLooks] = useState<SavedLook[]>([]);
+  const [saveLookModalOpen, setSaveLookModalOpen] = useState(false);
+  const [saveLookPayload, setSaveLookPayload] = useState<{ topId: string; bottomId: string } | null>(null);
+  const [saveLookDraft, setSaveLookDraft] = useState({
+    name: "",
+    tags: [] as string[],
+    visibility: "private" as "private" | "public",
+  });
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     experience: true,
     productCard: true,
@@ -198,6 +203,44 @@ export default function CustomizePage() {
   const publish = () => {
     // Placeholder: would persist and notify
   };
+
+  const toggleFavorite = useCallback((itemId: string) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      return next;
+    });
+  }, []);
+
+  const toggleClosetFilter = useCallback((key: string) => {
+    setClosetFilters((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
+
+  const openSaveLookModal = useCallback((payload: { topId: string; bottomId: string }) => {
+    setSaveLookPayload(payload);
+    setSaveLookDraft({ name: "", tags: [], visibility: "private" });
+    setSaveLookModalOpen(true);
+  }, []);
+
+  const submitSaveLook = useCallback(() => {
+    if (!saveLookPayload) return;
+    const look: SavedLook = {
+      id: `look_${Date.now()}`,
+      name: saveLookDraft.name || "My Look",
+      tags: saveLookDraft.tags,
+      visibility: saveLookDraft.visibility,
+      topId: saveLookPayload.topId,
+      bottomId: saveLookPayload.bottomId,
+    };
+    setSavedLooks((prev) => [...prev, look]);
+    setSaveLookModalOpen(false);
+    setSaveLookPayload(null);
+  }, [saveLookPayload, saveLookDraft]);
+
+  const deleteSavedLook = useCallback((id: string) => {
+    setSavedLooks((prev) => prev.filter((l) => l.id !== id));
+  }, []);
 
   return (
     <div className={styles.page}>
@@ -608,6 +651,19 @@ export default function CustomizePage() {
                   popupBottomItemId={popupBottomItemId}
                   setPopupBottomItemId={setPopupBottomItemId}
                   isMobile={device === "mobile"}
+                  onOpenSaveLook={openSaveLookModal}
+                  savedLooks={savedLooks}
+                  onDeleteSavedLook={deleteSavedLook}
+                  closetTab={closetTab}
+                  setClosetTab={setClosetTab}
+                  closetSearch={closetSearch}
+                  setClosetSearch={setClosetSearch}
+                  closetFilters={closetFilters}
+                  toggleClosetFilter={toggleClosetFilter}
+                  favorites={favorites}
+                  toggleFavorite={toggleFavorite}
+                  setPopupTopItemIdFromCloset={setPopupTopItemId}
+                  setPopupBottomItemIdFromCloset={setPopupBottomItemId}
                 />
               </div>
               </div>
@@ -615,6 +671,72 @@ export default function CustomizePage() {
           </div>
         </div>
       </div>
+
+      {/* Save Look modal */}
+      {saveLookModalOpen && saveLookPayload && (
+        <div className={styles.modalBackdrop} onClick={() => setSaveLookModalOpen(false)}>
+          <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>Save Look</h3>
+            <div className={styles.modalField}>
+              <label className={styles.modalLabel}>Look name</label>
+              <input
+                type="text"
+                className={styles.modalInput}
+                placeholder="e.g. Casual Friday"
+                value={saveLookDraft.name}
+                onChange={(e) => setSaveLookDraft((d) => ({ ...d, name: e.target.value }))}
+              />
+            </div>
+            <div className={styles.modalField}>
+              <label className={styles.modalLabel}>Tags</label>
+              <div className={styles.modalTagRow}>
+                {SAVE_LOOK_TAGS.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    className={`${styles.chip} ${saveLookDraft.tags.includes(tag) ? styles.chipSelected : ""}`}
+                    onClick={() =>
+                      setSaveLookDraft((d) => ({
+                        ...d,
+                        tags: d.tags.includes(tag) ? d.tags.filter((t) => t !== tag) : [...d.tags, tag],
+                      }))
+                    }
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className={styles.modalField}>
+              <label className={styles.modalLabel}>Visibility</label>
+              <div className={styles.pillGroup}>
+                <button
+                  type="button"
+                  className={`${styles.pill} ${saveLookDraft.visibility === "private" ? styles.pillActive : ""}`}
+                  onClick={() => setSaveLookDraft((d) => ({ ...d, visibility: "private" }))}
+                >
+                  Private
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.pill} ${saveLookDraft.visibility === "public" ? styles.pillActive : ""}`}
+                  onClick={() => setSaveLookDraft((d) => ({ ...d, visibility: "public" }))}
+                >
+                  Public
+                </button>
+              </div>
+            </div>
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.btnSecondary} onClick={() => setSaveLookModalOpen(false)}>
+                Cancel
+              </button>
+              <button type="button" className={styles.btnPrimary} onClick={submitSaveLook}>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -634,6 +756,19 @@ function PreviewContent({
   popupBottomItemId,
   setPopupBottomItemId,
   isMobile,
+  onOpenSaveLook,
+  savedLooks,
+  onDeleteSavedLook,
+  closetTab,
+  setClosetTab,
+  closetSearch,
+  setClosetSearch,
+  closetFilters,
+  toggleClosetFilter,
+  favorites,
+  toggleFavorite,
+  setPopupTopItemIdFromCloset,
+  setPopupBottomItemIdFromCloset,
 }: {
   view: PreviewView;
   previewState: PreviewState;
@@ -649,6 +784,19 @@ function PreviewContent({
   popupBottomItemId: string | null;
   setPopupBottomItemId: (id: string | null) => void;
   isMobile: boolean;
+  onOpenSaveLook: (payload: { topId: string; bottomId: string }) => void;
+  savedLooks: SavedLook[];
+  onDeleteSavedLook: (id: string) => void;
+  closetTab: "all" | "top" | "bottom" | "saved";
+  setClosetTab: (t: "all" | "top" | "bottom" | "saved") => void;
+  closetSearch: string;
+  setClosetSearch: (v: string) => void;
+  closetFilters: Record<string, boolean>;
+  toggleClosetFilter: (key: string) => void;
+  favorites: Set<string>;
+  toggleFavorite: (itemId: string) => void;
+  setPopupTopItemIdFromCloset: (id: string | null) => void;
+  setPopupBottomItemIdFromCloset: (id: string | null) => void;
 }) {
   const btnStyle = {
     height: config.productCard.buttonHeight,
@@ -730,19 +878,19 @@ function PreviewContent({
     }
     const isPortrait = popupMode === "portrait";
     const portraitItem = popupPortraitItemId
-      ? POPUP_MOCK_ITEMS.faceAccessories.find((i) => i.id === popupPortraitItemId)
+      ? EXAMPLE_ITEMS.faceAccessories.find((i) => i.id === popupPortraitItemId)
       : null;
     const topItem = popupTopItemId
-      ? POPUP_MOCK_ITEMS.top.find((i) => i.id === popupTopItemId)
+      ? EXAMPLE_ITEMS.top.find((i) => i.id === popupTopItemId)
       : null;
     const bottomItem = popupBottomItemId
-      ? POPUP_MOCK_ITEMS.bottom.find((i) => i.id === popupBottomItemId)
+      ? EXAMPLE_ITEMS.bottom.find((i) => i.id === popupBottomItemId)
       : null;
     const listItems = isPortrait
-      ? POPUP_MOCK_ITEMS.faceAccessories
+      ? EXAMPLE_ITEMS.faceAccessories
       : popupLayer === "top"
-        ? POPUP_MOCK_ITEMS.top
-        : POPUP_MOCK_ITEMS.bottom;
+        ? EXAMPLE_ITEMS.top
+        : EXAMPLE_ITEMS.bottom;
     const activeItemId = isPortrait
       ? popupPortraitItemId
       : popupLayer === "top"
@@ -810,7 +958,7 @@ function PreviewContent({
         <div className={styles.popupCanvasArea}>
           {isPortrait ? (
             <div className={styles.popupCanvasSingle}>
-              <div className={styles.popupCanvasBase} title={MODEL_PATHS.portraitBase} />
+              <div className={styles.popupCanvasBase} title={EXAMPLE_MODEL.portraitBase} />
               {portraitItem && (
                 <span className={styles.popupCanvasLabel}>
                   {portraitItem.name} on portrait
@@ -821,26 +969,31 @@ function PreviewContent({
               )}
             </div>
           ) : (
-            <>
-              <div className={styles.popupCanvasLayer}>
-                <span className={styles.popupCanvasLayerTitle}>Top</span>
-                <div className={styles.popupCanvasBase} title={MODEL_PATHS.fullbodyBase} />
-                {topItem ? (
+            <div className={styles.popupFullbodyStack}>
+              {topItem && (
+                <div className={styles.popupCanvasLayer}>
+                  <span className={styles.popupCanvasLayerTitle}>Top</span>
+                  <div className={styles.popupCanvasLayerImgWrap}>
+                    <img src={topItem.image} alt="" className={styles.popupCanvasLayerImg} />
+                  </div>
                   <span className={styles.popupCanvasLabel}>{topItem.name}</span>
-                ) : (
-                  <span className={styles.popupCanvasLabel}>Select top</span>
-                )}
-              </div>
-              <div className={styles.popupCanvasLayer}>
-                <span className={styles.popupCanvasLayerTitle}>Bottom</span>
-                <div className={styles.popupCanvasBase} />
-                {bottomItem ? (
+                </div>
+              )}
+              {bottomItem && (
+                <div className={styles.popupCanvasLayer}>
+                  <span className={styles.popupCanvasLayerTitle}>Bottom</span>
+                  <div className={styles.popupCanvasLayerImgWrap}>
+                    <img src={bottomItem.image} alt="" className={styles.popupCanvasLayerImg} />
+                  </div>
                   <span className={styles.popupCanvasLabel}>{bottomItem.name}</span>
-                ) : (
-                  <span className={styles.popupCanvasLabel}>Select bottom</span>
-                )}
-              </div>
-            </>
+                </div>
+              )}
+              {!topItem && !bottomItem && (
+                <div className={styles.popupCanvasLayer}>
+                  <span className={styles.popupCanvasLabel}>Select 1 top and 1 bottom</span>
+                </div>
+              )}
+            </div>
           )}
         </div>
         <div className={styles.popupItemList}>
@@ -852,13 +1005,23 @@ function PreviewContent({
               onClick={() => setActiveItemId(item.id)}
             >
               <div className={styles.popupItemThumb}>
-                <img src={item.imagePath} alt="" className={styles.popupItemThumbImg} />
+                <img src={item.image} alt="" className={styles.popupItemThumbImg} />
               </div>
               <span className={styles.popupItemName}>{item.name}</span>
             </button>
           ))}
         </div>
         <div className={styles.popupCtas}>
+          {!isPortrait && topItem && bottomItem && (
+            <button
+              type="button"
+              className={styles.cardBtn}
+              style={btnSecStyle}
+              onClick={() => onOpenSaveLook({ topId: popupTopItemId!, bottomId: popupBottomItemId! })}
+            >
+              Save Look
+            </button>
+          )}
           <button type="button" className={styles.cardBtn} style={btnStyle}>
             {config.popup.primaryCta}
           </button>
@@ -878,32 +1041,190 @@ function PreviewContent({
       </div>
     );
   }
+
+  const searchLower = closetSearch.trim().toLowerCase();
+  const filteredItems = (() => {
+    let list =
+      closetTab === "top"
+        ? ALL_CLOSET_ITEMS.filter((i) => i.category === "top")
+        : closetTab === "bottom"
+          ? ALL_CLOSET_ITEMS.filter((i) => i.category === "bottom")
+          : ALL_CLOSET_ITEMS;
+    if (closetFilters.top) list = list.filter((i) => i.category === "top");
+    if (closetFilters.bottom) list = list.filter((i) => i.category === "bottom");
+    if (closetFilters.favorite) list = list.filter((i) => favorites.has(i.id));
+    if (searchLower) list = list.filter((i) => i.name.toLowerCase().includes(searchLower));
+    return list;
+  })();
+
+  const closetTopItem = popupTopItemId ? EXAMPLE_ITEMS.top.find((t) => t.id === popupTopItemId) : null;
+  const closetBottomItem = popupBottomItemId ? EXAMPLE_ITEMS.bottom.find((b) => b.id === popupBottomItemId) : null;
+  const hasFullLook = Boolean(closetTopItem && closetBottomItem);
+
   return (
     <div className={styles.closetPreview}>
       <div className={styles.closetTabs}>
-        <button type="button" className={`${styles.closetTab} ${styles.closetTabActive}`}>
-          All
-        </button>
-        <button type="button" className={styles.closetTab}>Tops</button>
-        <button type="button" className={styles.closetTab}>Bottoms</button>
-        <button type="button" className={styles.closetTab}>Accessories</button>
-      </div>
-      <div className={styles.closetChips}>
-        <button type="button" className={`${styles.chip} ${styles.chipSelected}`}>
-          Item 1
-        </button>
-        <button type="button" className={styles.chip}>Item 2</button>
-        <button type="button" className={styles.chip}>Item 3</button>
-      </div>
-      {config.closet.createLookCta && (
-        <div className={styles.closetFooter}>
-          <button type="button" className={styles.cardBtn} style={btnStyle}>
-            Create Look
+        {(["all", "top", "bottom", "saved"] as const).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            className={`${styles.closetTab} ${closetTab === tab ? styles.closetTabActive : ""}`}
+            onClick={() => setClosetTab(tab)}
+          >
+            {tab === "all" ? "All" : tab === "top" ? "Top" : tab === "bottom" ? "Bottom" : "Saved Looks"}
           </button>
-          <button type="button" className={styles.cardBtn} style={btnSecStyle}>
-            Add Full Look to Cart
-          </button>
+        ))}
+      </div>
+
+      {closetTab === "saved" ? (
+        <div className={styles.savedLookList}>
+          {savedLooks.length === 0 ? (
+            <p className={styles.previewStateMessage}>No saved looks yet. Combine a top + bottom in Model Popup and click Save Look.</p>
+          ) : (
+            savedLooks.map((look) => {
+              const topItem = EXAMPLE_ITEMS.top.find((t) => t.id === look.topId);
+              const bottomItem = EXAMPLE_ITEMS.bottom.find((b) => b.id === look.bottomId);
+              return (
+                <div key={look.id} className={styles.savedLookCard}>
+                  <div className={styles.savedLookPreview}>
+                    {topItem && <img src={topItem.image} alt="" className={styles.savedLookPreviewImg} />}
+                    {bottomItem && <img src={bottomItem.image} alt="" className={styles.savedLookPreviewImg} />}
+                  </div>
+                  <h4 className={styles.savedLookName}>{look.name}</h4>
+                  <p className={styles.savedLookMeta}>
+                    {look.tags.length ? look.tags.join(", ") : "—"} · {look.visibility} · 2 items
+                  </p>
+                  <div className={styles.savedLookActions}>
+                    <button
+                      type="button"
+                      className={styles.closetItemActionBtn}
+                      onClick={() => {
+                        setPopupTopItemIdFromCloset(look.topId);
+                        setPopupBottomItemIdFromCloset(look.bottomId);
+                      }}
+                    >
+                      Apply
+                    </button>
+                    <button type="button" className={styles.closetItemActionBtn}>
+                      Edit
+                    </button>
+                    <button type="button" className={styles.closetItemActionBtn}>
+                      Add all to cart
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.closetItemActionBtn}
+                      onClick={() => onDeleteSavedLook(look.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
+      ) : (
+        <>
+          {/* Image-only preview: upper = top item, lower = bottom item */}
+          <div className={styles.closetPreviewSlots}>
+            <div className={`${styles.closetPreviewSlot} ${!closetTopItem ? styles.closetPreviewSlotEmpty : ""}`}>
+              {closetTopItem ? (
+                <img src={closetTopItem.image} alt="" className={styles.closetPreviewSlotImg} />
+              ) : null}
+            </div>
+            <div className={`${styles.closetPreviewSlot} ${!closetBottomItem ? styles.closetPreviewSlotEmpty : ""}`}>
+              {closetBottomItem ? (
+                <img src={closetBottomItem.image} alt="" className={styles.closetPreviewSlotImg} />
+              ) : null}
+            </div>
+          </div>
+
+          <div className={styles.closetScrollArea}>
+            <div className={styles.closetFilterRow}>
+              <input
+                type="search"
+                className={styles.closetSearch}
+                placeholder="Search by name"
+                value={closetSearch}
+                onChange={(e) => setClosetSearch(e.target.value)}
+              />
+              {(["top", "bottom", "favorite", "inStock"] as const).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`${styles.chip} ${closetFilters[key] ? styles.chipSelected : ""}`}
+                  onClick={() => toggleClosetFilter(key)}
+                >
+                  {key === "inStock" ? "In stock" : key === "top" ? "Top" : key === "bottom" ? "Bottom" : "Favorite"}
+                </button>
+              ))}
+            </div>
+            <div className={styles.closetItemList}>
+              {filteredItems.length === 0 ? (
+                <p className={styles.previewStateMessage}>No items match.</p>
+              ) : (
+                filteredItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className={styles.closetItemCard}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      if (item.category === "top") setPopupTopItemIdFromCloset(item.id);
+                      if (item.category === "bottom") setPopupBottomItemIdFromCloset(item.id);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        if (item.category === "top") setPopupTopItemIdFromCloset(item.id);
+                        if (item.category === "bottom") setPopupBottomItemIdFromCloset(item.id);
+                      }
+                    }}
+                  >
+                    <div className={styles.closetItemThumb}>
+                      <img src={item.image} alt="" className={styles.closetItemThumbImg} />
+                    </div>
+                    <div className={styles.closetItemBody}>
+                      <p className={styles.closetItemName}>{item.name}</p>
+                      <p className={styles.closetItemPrice}>${"price" in item ? item.price : "—"}</p>
+                    </div>
+                    <span className={styles.closetItemBadge}>{item.category}</span>
+                    <div className={styles.closetItemActions} onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        className={`${styles.closetItemActionBtn} ${styles.closetItemActionBtnFavorite}`}
+                        onClick={() => toggleFavorite(item.id)}
+                        aria-label={favorites.has(item.id) ? "Unfavorite" : "Favorite"}
+                        title={favorites.has(item.id) ? "Unfavorite" : "Favorite"}
+                      >
+                        {favorites.has(item.id) ? "♥" : "♡"}
+                      </button>
+                      <button type="button" className={styles.closetItemActionBtn} title="Remove or archive">
+                        …
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Sticky Save Look footer */}
+          <div className={styles.closetStickyFooter}>
+            <p className={`${styles.closetSaveLookMessage} ${hasFullLook ? styles.closetSaveLookMessageReady : ""}`}>
+              {hasFullLook ? "Your look is ready" : "Select 1 top and 1 bottom to create a look"}
+            </p>
+            <button
+              type="button"
+              className={styles.closetSaveLookBtn}
+              disabled={!hasFullLook}
+              onClick={() => hasFullLook && onOpenSaveLook({ topId: popupTopItemId!, bottomId: popupBottomItemId! })}
+            >
+              Save Look
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
